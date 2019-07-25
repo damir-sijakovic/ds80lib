@@ -26,7 +26,7 @@ Even though you could make object (.o) files and link all together in one lib.
 Best way to play around with these is to wipe everything from test.c/main() and use compile.sh inside module directory. 
 Development is done in module directories. So to compile run test.sh in module directory.  
 Lib/code is tested under ArchLinux/openrc 5.1 kernel and Valgrind 3.14.
-Documentation is in ds80lib_docs.html file.
+Documentation is in [ds80lib_docs.html](http://htmlpreview.github.io/?https://github.com/damir-sijakovic/ds80lib/blob/master/ds80lib_docs.html) file.
 
 
 ## Interface 
