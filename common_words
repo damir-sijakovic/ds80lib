@@ -1,0 +1,27 @@
+* make DSLinkedlist use same words as DSVector
+
+handle 
+size
+data
+str
+limit
+passback - pointer arg
+callback
+idx
+original, copy, clone
+split
+split_idx
+file
+fn_ptr
+search, pattern, term 
+src, dst   
+mode
+not_eq, eq
+no_error, error
+break_loop_at, running
+malloc_size
+add, remove
+
+a,b,c,d - helper args
+i,j,k,l - loops
+X,Y,Z - macro args

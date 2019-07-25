@@ -1,0 +1,28 @@
+TODO:
+
+* Match DSLinkedList name strings with DSVector
+
+* DSTree    - binary tree
+
+* DSJson    - integrate public domain json
+            - use DSPair with DSVector to create Json objects/arrays
+            
+* DSString  - use DSVector for garbage collection
+            - rebuild js string methods
+            - integrate public domain regex
+            - integrate public domain base64
+            - integrate public domain uri decode/encode
+            
+* DSSend  - send data to file/sql/port 
+
+
+
+General:
+
+vector & linkedlist
+* dsv_checkDups() - look for duplicate pointers
+* sorting helper functions 
+
+pair
+* add c types
+

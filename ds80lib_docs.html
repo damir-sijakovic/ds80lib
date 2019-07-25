@@ -1,0 +1,1373 @@
+<!DOCTYPE html>
+<head>
+    <meta name="viewport" drawer="width=device-width"><meta charset="utf-8" />
+    <meta name="author" content="Damir Šijaković">
+    <style type="text/css">
+    body, .button, .drawer, .string{        
+        background:#1e2341; color: #616fb6;
+        font-family: fixed, monaco, monospace; font-size: 14px;
+        padding:4px; margin: 4px; 
+    }    
+    
+    .button{background:#616fb6; color:black;} .button:hover{background:#6E7ECF;}    
+    .drawer{background:#101323; color:#616fb6; display: none; white-space: pre-wrap;}  
+    .drawer_visible{display: block}
+
+}
+    
+    </style>
+</head>
+<body>
+
+<!--BODY-----------------------------------------------------------------78-->
+
+<h3>DS80LIB c library  </h3>
+
+Version 0.60
+<br/><br/>
+
+C data structures. Written as a test of code reusability in C language.
+Released in the BSD licence. Most of the code is written by me (Damir Šijaković) 
+and some parts are from public domain code found on internet.
+<br/><br/>
+<!--------------------------------------------------------------------------->
+<b>DSVector</b><br />
+<div class="string" >
+DSVector is dynamically resizable array structure. DSVector have two resize modes.
+Resize mode defines how much memory in advance vector will allocate.
+In step mode resize happens by amount defined in step and in double mode 
+allocation space doubles with each new allocation.
+Resize will happen if you request number higher then current vector->length ie.
+with functions like set, push and unshift.
+<br/>
+</div>
+
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+Handle, types and macros
+</div><pre class="drawer">    
+#define DS_VECTOR_ITEM_LIMIT 10000 //Maximum number of vector slots.
+#define DS_VECTOR_MODE_DOUBLE 0xDB1E
+#define DS_VECTOR_MODE_STEP 0x57E9
+
+typedef struct DSVector{     
+    size_t length;
+    DSVectorMode mode;
+    int step;
+    void * data[1];    
+} DSVector;  
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+DSVector *dsv_create(size_t size, DSVectorMode mode, int step);
+</div><pre class="drawer">
+Args:
+size = allocate(make room) for amount of items
+mode = DS_VECTOR_MODE_DOUBLE, DS_VECTOR_MODE_STEP. In double mode, each new allocation should take double amount of memory of previous.  
+step = is ignored in DS_VECTOR_MODE_DOUBLE mode. In step mode, allocation happens every number defined in step argument.
+
+Returns:
+New adt.
+
+About:
+Init vector adt.
+
+Example:
+DSVector *v1 = dsv_create(0, DS_VECTOR_MODE_STEP, 1); //create empty vector
+DSVector *v1 = dsv_create(1000, DS_VECTOR_MODE_STEP, 1000); //create vector with 1000 slots and new resize will take 1000 additional slots.
+DSVector *v1 = dsv_create(1000, DS_VECTOR_MODE_DOUBLE, 0); //create vector with 1000 slots and new resize double additional slots.
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+void dsv_destroy(DSVector *handle);
+</div><div class="drawer">
+Args: 
+handle = adt handle
+
+Returns:
+void
+
+About:
+Destroys, removes adt from memory.
+</div>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+DSVector *dsv_clone(DSVector *handle); //clones adt object
+</div><div class="drawer">
+Args:
+handle = Adt to clone
+
+Returns:
+Cloned adt.
+
+About:
+Creates clone of passed handle.
+</div>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+int dsv_resize(DSVector **handle, size_t length);
+</div><div class="drawer">
+Args:
+handle = adt 
+length = new length
+
+Returns: 
+Status (nothing, todo...)
+
+About:
+Resize vector
+</div>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+boolean dsv_set(DSVector **handle, unsigned index, void * data); 
+</div><div class="drawer">
+Args:
+handle
+index = target index (if index is outside allocated length, resize will happen)
+data = data pointer to store
+
+Returns:
+Status (nothing, todo...)
+
+Example:
+DSVector *v1 = dsv_create(0, DS_VECTOR_MODE_STEP, 1); //create empty vector
+dsv_set(&v1, 309, "stack string pointer"); //resize and put string to index 309
+</div>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+int dsv_shrinkToFit(DSVector **handle);
+</div><div class="drawer">
+Args:
+handle
+
+Returns:
+-1 on error, removed size 
+
+</div>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+boolean dsv_forEach(DSVector **handle, boolean (*fn_ptr)(void **));
+</div><div class="drawer">
+Args:
+handle
+fn_ptr = pointer to helper function
+
+Returns:
+-1 on error, removed size 
+
+About:
+Takes helper function as argument. Helper function is applied to every
+item in vector. If helper function returns FALSE, iteration stops.
+
+Helper function must be in this format:
+
+boolean pf_test(void **a){
+    // printf("%s\n", *a); //read
+    *a = "Overwrite with dsv_forEach.";  //write 
+    return TRUE;  
+}
+
+
+
+</div>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+int dsv_forEachComplex(DSVector **handle, int (*fn_ptr)(void**, void**), void **data);
+</div><div class="drawer">
+Args:
+handle
+fn_ptr = pointer to helper function
+data = data to be passed in helper function
+
+Returns:
+Integer as return code.
+
+About:
+This is same as dsv_forEach() but extended with extra data argument.
+To stop iteration set data argument to NULL.
+
+Helper format:
+
+int pf_test(void **a, void **e){        
+    if (error) {
+        *e = NULL; //stops iteration
+        return -1;
+    }
+    
+    // printf("%s\n", *a); //read    
+    *a = *e;  //write 
+    
+    return 1;  
+}
+
+
+Example:
+
+static int dshs_FE_replace_hfunc(void **v, void **data){    
+
+    DSHashTablePair *new_pair =  *data; //label extra data as DSHashTablePair
+    DSHashTablePair *stored_pair = *v; //label v as DSHashTablePair, v is every item of vector
+   
+    if (new_pair->key == stored_pair->key){ //compare keys
+        stored_pair->data = new_pair->data; //set data
+        return 1; //return status
+    }
+   
+   return -1; //return negative status
+
+}
+
+</div>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+void *dsv_forEachData(DSVector **handle, void *(*fn_ptr)(void**, void**), void **data);  
+</div><div class="drawer">
+Args:
+handle
+fn_ptr = helper function
+data = extra data to be passed in helper function
+
+Returns:
+void* data that helper function returns
+
+About:
+Same as dsv_forEachComplex() but returns void* data from helper function .
+To stop iteration set data argument to NULL.
+
+Helper format:
+
+void *pf_test(void **a, void **e){        
+    if (error) {
+        *e = NULL; //stops iteration
+        return NULL;
+    }
+    
+    // printf("%s\n", *a); //read    
+    *a = *e;  //write 
+    
+    return *a; //returns modified *a arg 
+}
+
+Example:
+
+static void *dshs_FE_find_hfunc(void **v, void **data){    
+    DSHashTablePair *stored_pair = *v; //label v as pair (v is every vector item)  
+     
+    if (0 == strncmp(stored_pair->key, (char*)*data, DS_HASHTABLE_KEYSTR_LIMIT)){ //compare data       
+        *data = NULL; //data found, stop loop
+        return stored_pair->data; //return what you found
+    }
+
+   return NULL;
+}
+
+</div>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+void **dsv_getContainer(DSVector **handle, unsigned index);
+</div><div class="drawer">
+Args:
+handle
+index = vector index 
+
+Returns:
+Address of container of index.
+
+About:
+Returns address of container of index. To which on you can for example allocate something.
+Useful when working with multiple adt-s.
+
+Example:
+    void **data_address = dsv_getContainer(&v, 4);
+    *data_address = "Changed stuff at index 4.";
+</div>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+int dsv_push(DSVector **handle, void *data);
+</div><div class="drawer">
+Args:
+handle
+data - data to store in vector 
+
+Returns:
+New size
+
+About:
+Stack push method. It will push data at end of vector->length. BUT, if your 
+resize mode is step/every 10 steps then you will push data in every 10th
+slot in vector. So if you wish to use vector as stack use step/1 mode.
+
+You can use external counter and dsv_set function to avoid step/1 mode ie. resize per every new item.
+</div>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+void *dsv_pop(DSVector **handle);
+</div><div class="drawer">
+Args:
+handle
+
+Returns:
+Removed data.
+
+About:
+Removes last vector item and returns data. Read dsv_push() about stack-like functions.
+
+</div>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+int dsv_unshift(DSVector **handle, void *data);
+</div><div class="drawer">
+Args:
+handle
+data = data to store in vector 
+
+Returns:
+New size
+
+About:
+Inserts data in front of vector. Read dsv_push() about stack-like functions.
+
+</div>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+void *dsv_shift(DSVector **handle);
+</div><div class="drawer">
+Args:
+handle
+
+Returns:
+Removed data.
+
+About:
+Removes first item in vector.  Read dsv_push() about stack-like functions.
+
+</div>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+void dsv_nullify(DSVector **v);
+</div><div class="drawer">
+Args:
+v = handle
+
+Returns:
+void
+
+About:
+Sets all to null, even struct header.
+</div>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+size_t dsv_getByteSize(DSVector *v); 
+</div><div class="drawer">
+Args:
+v = handle
+
+Returns:
+Size of whole adt object.
+
+About:
+
+</div>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+boolean dsv_reverse(DSVector **v);
+</div><div class="drawer">
+Args:
+v = handle
+
+Returns:
+Status
+
+About:
+Reverse vector items.
+
+</div>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+boolean dsv_compare(DSVector *a, DSVector *b);
+</div><div class="drawer">
+Args:
+a = vector handle a
+b = vector handle b
+
+Returns:
+Status
+
+About:
+Compares two vectors. TODO: compare unsorted
+
+</div>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+int dsv_areMembers(DSVector *v, void *data, unsigned start_index); 
+</div><div class="drawer">
+Args:
+v = handle
+data = data to search for
+start_index = start search from index
+
+Returns:
+return index if found, -1 if not
+
+About:
+Search for vector members.
+
+</div>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+void *dsv_removeMember(DSVector **handle, unsigned idx);
+</div><div class="drawer">
+Args:
+handle
+idx = vector index 
+
+Returns:
+Removed data.
+
+About:
+Remove member at index and return removed data. 
+
+</div>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+int dsv_insertMember(DSVector **handle, unsigned idx, void *data); 
+</div><div class="drawer">
+Args:
+handle
+idx = index
+data 
+
+Returns:
+New size.
+
+About:
+Insert member at index and return new size.
+</div>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+void dsv_swapMembers(DSVector **handle, unsigned idx_a, unsigned idx_b);
+</div><div class="drawer">
+Args:
+handle
+idx_a = index a
+idx_b = index b
+
+Returns:
+void
+
+About:
+Swaps data at indexes.
+
+</div>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+DSVector *dsv_merge(DSVector *a, DSVector *b);
+</div><div class="drawer">
+Args:
+a = vector a
+b = vector b
+
+Returns:
+New merged vector
+
+About:
+Merge two vector adt into one.
+
+</div>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+void dsv_firstToLast(DSVector **handle);
+</div><div class="drawer">
+Args:
+handle
+
+Returns:
+void
+
+About:
+Move data of first to last.
+
+</div>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+void dsv_lastToFirst(DSVector **handle);
+</div><div class="drawer">
+Args:
+handle
+
+Returns:
+void
+
+About:
+Move data of last to first slot. 
+
+</div>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+boolean dsv_isNull(DSVector *handle, unsigned idx);
+</div><div class="drawer">
+Args:
+handle
+idx = index
+
+Returns:
+If NULL, TRUE
+
+About:
+If index is NULL return TRUE.
+
+</div>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+int dsv_countUsed(DSVector *handle);
+</div><div class="drawer">
+Args:
+handle
+
+Returns:
+Number of used slots.
+
+About:
+
+</div>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+int dsv_countFree(DSVector *handle);
+</div><div class="drawer">
+Args:
+handle
+
+Returns:
+Number of allocated unused slots.
+
+About:
+
+</div>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+...
+</div><div class="drawer">
+Args:
+
+Returns:
+
+About:
+
+</div>
+<!--------------------------------------------------------------------------->
+<br/><b>DSLinkedList</b><br/>
+<div class="string" >
+Plain one direction linked list. 
+<br />
+</div>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+Handle, types and macros
+</div><pre class="drawer">
+typedef struct DSNode {    
+    void *data;
+    struct DSNode *next;
+} DSNode;
+
+typedef struct DSLinkedList {    
+    unsigned length;
+    struct DSNode *head;
+    struct DSNode *tail;
+} DSLinkedList;
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+DSLinkedList *dsll_initilize();
+</div><pre class="drawer">
+Args:
+
+Returns:
+Linked list adt.
+
+About:
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+DSNode *dsll_createNode(void *data);
+</div><pre class="drawer">
+Args:
+data = data to pass in node
+
+Returns:
+New node.
+
+About:
+Creates basic node.
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+int dsll_terminate(DSLinkedList **l);
+</div><pre class="drawer">
+Args:
+l = handle
+
+Returns:
+Status
+
+About:
+Destroy adt. Free memory.
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+size_t dsll_push(DSLinkedList **l, void *data);
+</div><pre class="drawer">
+Args:
+l = handle 
+data = data to set
+
+Returns:
+New length.
+
+About:
+Push data int adt.
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+void *dsll_pop(DSLinkedList **l); //rem last pass rem data
+</div><pre class="drawer">
+Args:
+l = handle
+
+Returns:
+Removed data.
+
+About:
+Remove last node return data.
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+size_t dsll_unshift(DSLinkedList **l, void *val); 
+</div><pre class="drawer">
+Args:
+l = handle
+val = data
+
+Returns:
+New size.
+
+About:
+Insert to first slot and return length.
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+void *dsll_shift(DSLinkedList **l); //rem first and return value
+</div><pre class="drawer">
+Args:
+l = handle
+
+Returns:
+removed data.
+
+About:
+Remove first node and return data.
+
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+void dsll_firstToLast(DSLinkedList **l);
+</div><pre class="drawer">
+Args:
+l = handle
+
+Returns:
+void
+
+About:
+Move first node to last slot.
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+void dsll_lastToFirst(DSLinkedList **l);
+</div><pre class="drawer">
+Args:
+l = handle
+
+Returns:
+void
+
+About:
+Move last node to first slot.
+
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+boolean dsll_forEach(DSLinkedList **l, boolean (*pf)(void**)); 
+</div><pre class="drawer">
+Args:
+l = handle
+pf = pointer to helper function
+
+Returns:
+Status
+
+About:
+Read vectors dsv_forEach();
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+int dsll_forEachComplex(DSLinkedList **l, int (*pf)(void**, void**), void **data); 
+</div><pre class="drawer">
+Args:
+l = handlee
+pf = pointer to helper function
+data = extra data to pass in helper function
+
+Returns:
+Status
+
+About:
+Read vectors dsv_forEachComplex();
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+void *dsll_forEachData(DSLinkedList **l, void* (*pf)(void**, void**), void **data);
+</div><pre class="drawer">
+Args:
+l = handle
+pf = pointer to helper function
+data = extra data to pass in helper function 
+
+Returns:
+Proccessed data.
+
+About:
+Read vectors dsv_forEachData();
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+void *dsll_get(DSLinkedList *l, unsigned index);
+</div><pre class="drawer">
+Args:
+l = handle
+index
+
+Returns:
+Data at index.
+
+About:
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+void *dsll_set(DSLinkedList *l, unsigned index, void *data);
+</div><pre class="drawer">
+Args:
+l = handle
+index
+data = to set at index
+
+Returns:
+node->next
+
+About:
+Sets data at index. 
+
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+boolean dsll_dataExists(DSLinkedList *l, void *data);  
+</div><pre class="drawer">
+Args:
+l = handle
+data = data pointer to compare 
+
+Returns:
+Boolean
+
+About:
+Is pointer in list.
+
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+DSLinkedList *dsll_merge(DSLinkedList *a, DSLinkedList *b);
+</div><pre class="drawer">
+Args:
+a = handle a
+b = handle b
+
+Returns:
+New list.
+
+About:
+Merge two lists to new one.
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+int dsll_findPrev(DSLinkedList **l, DSNode **prev, unsigned idx); 
+</div><pre class="drawer">
+Args:
+l = handle
+prev = passback node pointer
+idx = index
+
+Returns:
+Return code - 0: empty list, -1: no prev item, 1: found data
+
+About:
+Passback argument pointer of previous DSNode at index.
+
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+DSNode *dsll_findDataGetNode(DSLinkedList **l, void *data);
+</div><pre class="drawer">
+Args:
+l = handle
+data = data pointer to look for 
+
+Returns:
+Pointer to node which holds data.
+
+About:
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+int dsll_findDataIndex(DSLinkedList **l, void *data);  
+</div><pre class="drawer">
+Args:
+l = handle
+data = data pointer to look for
+
+Returns:
+Index of node, -1 if nothing was found.
+
+About:
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+int dsll_findPrevData(DSLinkedList **l, DSNode **prev, void *data); 
+</div><pre class="drawer">
+Args:
+l = handle
+prev = passback pointer to node
+data = data pointer to look for.
+
+Returns:
+Return code - 0: empty list, -1: no prev item, 1: found data
+
+About:
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+boolean dsll_swap(DSLinkedList *l, unsigned idx_a, unsigned idx_b);
+</div><pre class="drawer">
+Args:
+l = handle
+idx_a = index a
+idx_b = index b
+
+Returns:
+Status
+
+About:
+Swap nodes.
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+DSLinkedList *dsll_vectorToLinkedList(DSVector *v);
+</div><pre class="drawer">
+Args:
+v = vector handle
+
+Returns:
+New linkedlist handle; 
+
+About:
+Converts DSVector to DSlinkedList
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+DSVector *dsll_linkedListToVector(DSLinkedList *l);
+</div><pre class="drawer">
+Args:
+l = linkedlist handle
+
+Returns:
+New vector handle; 
+
+About:
+Converts DSlinkedList to DSVector
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+DSLinkedList *dsll_reverse(DSLinkedList *l);
+</div><pre class="drawer">
+Args:
+l = handle
+
+Returns:
+Reversed list.
+
+About:
+Reverses all items in list. 
+
+Note: Converts list to vector then reverses item (with for loop) and then it constructs new linkedlist.
+Todo: Re-iterate list items one by one.  
+
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+boolean dsll_find(DSLinkedList **l, DSNode **n, unsigned idx);
+</div><pre class="drawer">
+Args:
+l = handle
+n = passback node (if found pointer to node will be added here)
+idx = index to look
+ 
+Returns:
+TRUE if idx exist
+
+Note:
+Don't remove
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+...
+</div><pre class="drawer">
+Args:
+
+Returns:
+
+About:
+</pre>
+<!--------------------------------------------------------------------------->
+<br/><b>DSHashtable</b><br/>
+<div class="string" >
+Hash table structure based on DSVector/DSLinkedList
+<br />
+</div>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+Handle, types and macros
+</div><pre class="drawer">
+
+#define DS_HASHTABLE_TABLE_LOWER_LIMIT 2 
+#define DS_HASHTABLE_TABLE_UPPER_LIMIT DS_VECTOR_ITEM_LIMIT // change DS_VECTOR_ITEM_LIMIT in vector.h
+#define DS_HASHTABLE_KEYSTR_LIMIT 1024 
+
+typedef enum {
+    DSH_START = 0, 
+    DSH_RAMAKRISHNA, 
+    DSH_DJB2, 
+    DSH_SDBM, 
+    DSH_FNV32, 
+    DSH_END, 
+} DSHashTableEnum;
+
+typedef enum {
+    DSHM_START = 0, 
+    DSHM_LINKEDLIST, 
+    DSHM_VECTOR, 
+    DSHM_END, 
+} DSHashTableModeEnum;
+
+
+typedef struct DSHashTable{
+    unsigned size;    
+    DSHashTableEnum hash;
+    DSHashTableModeEnum bucket_mode;
+    DSVector *table;
+} DSHashTable;
+
+typedef struct DSHashTablePair {    
+    char *key;
+    void *data;
+} DSHashTablePair;
+
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+DSHashTable *dshs_create(unsigned size, DSHashTableEnum hash, DSHashTableModeEnum mode);
+</div><pre class="drawer">
+Args:
+size = table size
+hash = hash algoritm accepted values are: DSH_RAMAKRISHNA | DSH_DJB2 | DSH_SDBM | DSH_FNV32 
+mode = collision mode, accepted values are: DSHM_LINKEDLIST | DSHM_VECTOR
+Returns:
+
+About:
+Init hash table adt. Use dshs_toPrime() to get prime number for table size.
+
+Example:
+DSHashTable *hs = dshs_create(dshs_toPrime(512), DSH_FNV32, DSHM_VECTOR);
+
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+int dshs_destroy(DSHashTable **handle);
+</div><pre class="drawer">
+Args:
+handle
+
+Returns:
+Status
+
+About:
+Destroys adt, frees memory.
+
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+int dshs_set(DSHashTable **handle, char *key, void *data);
+</div><pre class="drawer">
+Args:
+handle
+key = key string
+data = pointer to data
+
+Returns:
+Hash index.
+
+About:
+Adds key/value to hashtable.
+
+Example:
+int address = dshs_set(&hs, "username", "willy wonka");
+
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+void *dshs_get(DSHashTable **handle, char *key);
+</div><pre class="drawer">
+Args:
+handle
+key = key string
+
+Returns:
+Data pointer linked with key or NULL if key is not found. 
+
+About:
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+int dshs_countCollides(DSHashTable *handle);
+</div><pre class="drawer">
+Args:
+handle
+
+Returns:
+number of bucket collides
+
+About:
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+int dshs_countMembers(DSHashTable *handle);
+</div><pre class="drawer">
+Args:
+handle
+
+Returns:
+Number of hashtable members.
+
+About:
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+int dshs_toPrime(int num);
+</div><pre class="drawer">
+Args:
+num = number 
+
+Returns:
+Nearest prime number. 
+
+About: 
+Why should table size be a prime number? 
+The only reason is to avoid clustering of values into a small number of 
+buckets (yes, distribution). A more even distributed hashtable will 
+perform more consistently.
+
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+DSVector *dshs_convertToVector(DSHashTable *handle);
+</div><pre class="drawer">
+Args:
+handle
+
+Returns:
+Handle to DSVector. 
+
+About:
+Collects all table members into DSVector. 
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+DSLinkedList *dshs_convertToLinkedList(DSHashTable *handle);
+</div><pre class="drawer">
+Args:
+handle
+
+Returns:
+Handle to DSLinkedList. 
+
+About:
+Collects all table members into DSLinkedList. 
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+...
+</div><pre class="drawer">
+Args:
+
+Returns:
+
+About:
+</pre>
+<!--------------------------------------------------------------------------->
+<br/><b>DSPair</b><br/>
+<div class="string" >
+Key/value structure. To free just use free() on handle.
+<br />
+</div>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+Handle, types and macros
+</div><pre class="drawer">
+#define DS_PAIR_KEY_MAX_LENGTH 256 
+#define DS_PAIR_KEY_MIN_LENGTH 2
+#define DS_PAIR_STRING_DATA_LIMIT 1024
+
+
+typedef enum {
+    DSPE_TYPE_START = 10064, 
+    DSPE_TYPE_STRING, 
+    DSPE_TYPE_NUMBER, //double
+    DSPE_TYPE_BOOLEAN, 
+    DSPE_TYPE_NULL, 
+    DSPE_TYPE_END, 
+} DSPairTypeEnum;
+    
+typedef struct DSPair{
+    char *key;
+    char data[1];
+} DSPair;
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+DSPair *dspr_newNumber(char *key, double n);
+</div><pre class="drawer">
+Args:
+key = string key id
+n = number
+
+Returns:
+DSPair handle
+
+About:
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+DSPair *dspr_newString(char *key, char *str);
+</div><pre class="drawer">
+Args:
+key = string key id
+str = string
+
+Returns:
+DSPair handle
+
+About:
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+DSPair *dspr_newBoolean(char *key, boolean b);
+</div><pre class="drawer">
+Args:
+key = string key id
+b = boolean
+
+Returns:
+DSPair handle
+
+About:
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+DSPair *dspr_newNull(char *key);
+</div><pre class="drawer">
+Args:
+key = string key id
+
+Returns:
+DSPair handle
+
+About:
+Creates pair, sets key and set value to NULL. {"key":null} 
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+double dspr_getNumber(DSPair *handle);
+</div><pre class="drawer">
+Args:
+handle
+
+Returns:
+double number.
+
+About:
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+char *dspr_getString(DSPair *handle);
+</div><pre class="drawer">
+Args:
+handle
+
+Returns:
+String
+
+About:
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+boolean dspr_getBoolean(DSPair *handle); 
+</div><pre class="drawer">
+Args:
+handle
+
+Returns:
+boolean
+
+About:
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+int dspr_typeOf(DSPair *handle);  
+</div><pre class="drawer">
+Args:
+handle
+
+Returns:
+DSPairTypeEnum: DSPE_TYPE_STRING | DSPE_TYPE_NUMBER | DSPE_TYPE_BOOLEAN | DSPE_TYPE_NULL | DSPE_TYPE_UNKNOWN
+
+About:
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+char *dspr_getKey(DSPair *handle);
+</div><pre class="drawer">
+Args:
+handle
+
+Returns:
+Key string
+
+About:
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+size_t dspr_getStringSize(DSPair *handle);
+</div><pre class="drawer">
+Args:
+handle
+
+Returns:
+Size of DSPair holding string.
+
+Example:
+size_t str_length = 0;
+DSPair *p = dspr_newString("key", "value");
+if (dspr_typeOf(p) == DSPE_TYPE_STRING){
+    str_length = dspr_getStringSize(p);
+}
+
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+char *dspr_toJson(DSPair *handle);
+</div><pre class="drawer">
+Args:
+handle
+
+Returns:
+Json string.
+
+About:
+Converts DSPair to Json string.
+
+Example:
+DSPair *p = dspr_newString("key", "value");
+char *json = dspr_toJson(p); // {"key": "value"}
+
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+char *dspr_toJsonStripped(DSPair *handle); 
+</div><pre class="drawer">
+Args:
+handle
+
+Returns:
+Json string.
+
+About:
+Converts DSPair to 'stripped' (without curly brackets) Json string. 
+Reason for this is DSPair will be used with DSVector/DSLinkedList to
+hold Json objects/arrays.  
+
+Example:
+DSPair *p = dspr_newString("key", "value");
+char *json = dspr_toJsonStripped(p); // "key": "value"
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+...
+</div><pre class="drawer">
+...
+</pre>
+<!--------------------------------------------------------------------------->
+
+
+<!-- END -->
+
+
+<!--------------------------------------------------------------------------->
+<br/><b>...</b><br/>
+<div class="string" >
+...
+<br />
+</div>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+...
+</div><pre class="drawer">
+reserved
+</pre>
+<!--------------------------------------------------------------------------->
+
+
+
+
+
+<script type="text/javascript"> 
+/****************************************************************************\
+                                  Drawer
+\****************************************************************************/
+
+function ds_utl_encodeHtml(arg_str) {
+    return arg_str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') ;
+}
+
+function drawer_toggle(self){ 
+    var clss = "drawer_visible";
+    var elem = self.nextElementSibling;
+    
+   // elem.innerHTML = ds_utl_encodeHtml(elem.innerHTML);
+
+        var class_string = " "+clss;
+    (elem.className.indexOf(clss) == -1) ? 
+        elem.className += class_string : 
+        elem.className = elem.className.replace(clss, "");
+        elem.className = elem.className.replace(/\s+/g,' ').trim();
+}
+
+</script>
+</body>
+</html>
