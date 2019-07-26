@@ -488,3 +488,26 @@ char *dspr_getKey(DSPair *handle){
     return handle->key;
 }
 
+/*
+ // PREPARE FOR WRITE HEX 
+ 
+void ds_byte2hex(unsigned char byte, char *hexstr){  //passin hexstr[2] 
+    sprintf(&hexstr[0], "%02X", byte); 
+}
+
+unsigned char ds_hex2byte(char *hexstr){    
+    return strtoul("6E", 0, 16);    
+}
+
+int ds_isHexByte(char *hexstr){
+    if (strlen != 2){
+        return -1
+    }
+    if (s[strspn(s, "0123456789abcdefABCDEF")] == 0){
+        return 1;
+    }
+    return -1;    
+}
+  
+ */
+

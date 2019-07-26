@@ -23,6 +23,13 @@
 #define DS_PRINTB(X)    ((X == FALSE) ? printf("%s\n", "dslib: FALSE") : printf("%s\n", "dslib: TRUE") )
 #define DS_ISBETWEEN(value, min, max) (value < max && value > min) // if(DS_ISBETWEEN(5, 1, 101)){ ... }
 
+#define DS_HEXTONIBBLE(c) (*(c) >= 'A' ? (*(c) - 'A')+10 : (*(c)-'0'))
+#define DS_HEXTOBYTE(c) (DS_HEXTONIBBLE(c)*16 + DS_HEXTONIBBLE(c+1))
+
+//#define ISHEX(X) (X[strspn(X, "0123456789abcdefABCDEF")] == 0) ? 1 : 0
+//#define ISHEXBYTE(X) (strlen(X) == 2 && (X[strspn(X, "0123456789abcdefABCDEF")] == 0)) ? 1 : 0
+
+
 /* types */
 #ifndef FALSE
  #define FALSE (0)

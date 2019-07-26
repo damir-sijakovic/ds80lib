@@ -1323,9 +1323,312 @@ char *json = dspr_toJsonStripped(p); // "key": "value"
 ...
 </pre>
 <!--------------------------------------------------------------------------->
+<br/><b>DSChunk</b><br/>
+<div class="string" >
+Basic type with size
+<br/>
+</div>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+Handle, types and macros
+</div><pre class="drawer">
+#define DS_CHK_NEWSTR_LIMIT 2048
+
+typedef struct DSChunk{
+    size_t size;    
+    unsigned char data[1];
+} DSChunk; 
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+DSChunk *dsch_new(size_t size);
+</div><pre class="drawer">
+Args:
+size = size of chunk
+Returns:
+DSChunk adt.
+
+About:
+Creates (allocates) adt in memory with size passed in with 'size' arg. 
+
+Example:
+DSChunk *ch = dsch_new(1000);
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+void dsch_set(DSChunk **handle, void *data);
+</div><pre class="drawer">
+Args:
+handle
+data = pointer of data that will be copied into adt.
+
+Returns:
+
+About:
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+DSChunk *dsch_newStr(char *str);
+</div><pre class="drawer">
+Args:
+str = pointer of data that will be copied into adt. 
+
+Returns:
+
+About:
+DS_CHK_NEWSTR_LIMIT limits size of string.
+
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+DSChunk *dsch_newText(char *str, size_t limit);
+</div><pre class="drawer">
+Args:
+str = string that will be copied into adt.
+limit = limit copy at
+Returns:
+
+About:
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+void *dsch_get(DSChunk *handle);
+</div><pre class="drawer">
+Args:
+handle
+
+Returns:
+Pointer to data stored in adt.
+
+About:
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+void dsch_nullify(DSChunk **handle); 
+</div><pre class="drawer">
+Args:
+handle
+
+Returns:
+
+About:
+Memset null handle->data.
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+void dsch_copy(DSChunk *source, DSChunk **destination);
+</div><pre class="drawer">
+Args:
+source
+destination 
+
+Returns:
+
+About:
+Copy source adt to destination limited by destination->size.
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+void dsch_resize(DSChunk **handle, size_t size);
+</div><pre class="drawer">
+Args:
+handle
+size = new size
+
+Returns:
+
+About:
+Resize adt to new size.
+
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+DSChunk *dsch_join(DSChunk *a, DSChunk *b);
+</div><pre class="drawer">
+Args:
+a = handle a
+b = handle b
+
+Returns:
+Handle to new DSChunk.
+
+About:
+Join two chunks into new one.
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+void dsch_destroy(DSChunk **handle);
+</div><pre class="drawer">
+Args:
+handle
+
+Returns:
+...
+
+About:
+free() chunk and set pointer to NULL.
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+DSChunk *dsch_split(DSChunk **original, size_t idx);
+</div><pre class="drawer">
+Args:
+original = handle
+idx = byte index
+
+Returns:
+Other half of splited.
+
+About:
+Splits 'original' handle and passes back other half.
+
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+void dsch_removeRange(DSChunk **handle, size_t idx, size_t size);
+</div><pre class="drawer">
+Args:
+handle
+idx = byte index 
+size = size to be removed
+
+Returns:
+
+About:
+Removes from byte index size defined in 'size' argument.
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+void dsch_ltrim(DSChunk **handle, size_t size);
+</div><pre class="drawer">
+Args:
+handle
+size
+
+Returns:
+
+About:
+Left trim bytes defined by 'size' argument.
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+void dsch_rtrim(DSChunk **handle, size_t size);
+</div><pre class="drawer">
+Args:
+handle
+size
+
+Returns:
+
+About:
+Right trim bytes defined by 'size' argument.
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+void dsch_save(DSChunk *h, char *file);   
+</div><pre class="drawer">
+Args:
+h = handle
+file
+
+Returns:
+
+About:
+Save handle->data to text file in wb mode.
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+DSChunk *dsch_load(char *file);
+</div><pre class="drawer">
+Args:
+file
+
+Returns:
+Handle to new DSChunk. 
+
+About:
+Loads file to new DSChunk in rb mode.
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+void dsch_iterate(DSChunk **h, unsigned char *(* f)(unsigned char*) );
+</div><pre class="drawer">
+Args:
+h = handle
+f = helper function 
+
+Returns:
+...
+
+About:
+Iterate byte by byte data through external helper function.
+TODO: Implement three iteration functions from DSVector 
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+void dsch_iterBlocks(DSChunk **h, unsigned int block_size, void (*func)(void*));
+</div><pre class="drawer">
+Args:
+h = handle
+block_size = size of block to be passed into helper function.
+
+Returns:
+
+About:
+Pass blocks of handle->data to external function.
+
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+void *dsch_find(DSChunk *haystack, DSChunk *needle);
+</div><pre class="drawer">
+Args:
+haystack
+needle
+
+Returns:
+Address in 'haystack' where 'needle' is found.
+
+About:
+Search for needle->data in haystack->data.
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+boolean dsch_allowBytes(DSChunk *c, DSChunk *pattern);
+</div><pre class="drawer">
+Args:
+c = handle
+pattern = handle with allowed pattern
+
+Returns:
+Bool if c->data have same bytes as pattern->data.
+
+
+Example:
+DSChunk *hex = dsch_newStr("deadbeef");
+DSChunk *pattern = dsch_newStr("0123456789abcdef");
+boolean hex_string_ok = dsch_allowBytes(hex, pattern);
+
+</pre>
+<!--------------------------------------------------------------------------->
+<div onClick="drawer_toggle(this)" class="button">
+...
+</div><pre class="drawer">
+...
+</pre>
+<!--------------------------------------------------------------------------->
 
 
 <!-- END -->
+
+
+
+
+
+
+
+
+
 
 
 <!--------------------------------------------------------------------------->
