@@ -5,6 +5,8 @@
 #include "../include/dslib.h"
 #include "../include/pair.h"
 
+
+
 void dspr_error(char *msg){
     fprintf(stderr, "dslib error: %s \n", msg);
     exit(EXIT_FAILURE);
@@ -57,25 +59,12 @@ double dspr_getNumber(DSPair *handle){
     if (dspr_typeOf(handle) != DSPE_TYPE_NUMBER){
         dspr_error("Not a DSPair number datatype.");
     }
+
+    int number_start = 5 + strlen(handle->key); 
     
-    int number_start = 1;
-    int found_first = 0;
-    for (; number_start<32; number_start++){   
-        if (found_first && handle->data[number_start] == '\0'){
-            number_start++;
-            break;
-        }     
-        
-        if (handle->data[number_start] == '$'){
-            found_first = 1;
-            number_start +=2;
-        }
-    }
-   
     double *d = (double*) &handle->data[number_start];
     return *d; 
 }
-
 
 DSPair *dspr_newBoolean(char *key, boolean b){
     size_t keysize = strlen(key);
@@ -135,21 +124,7 @@ boolean dspr_getBoolean(DSPair *handle){
         dspr_error("Not a DSPair boolean datatype.");
     }
     
-    int bool_start = 1;
-    int found_first = 0;
-    for (; bool_start<32; bool_start++){   
-        if (found_first && handle->data[bool_start] == '\0'){
-            bool_start++;
-            break;
-        }     
-        
-        if (handle->data[bool_start] == '$'){
-            found_first = 1;
-            bool_start +=2;
-        }
-    }
-        
-    //boolean *ret = (boolean*) &handle->data[bool_start];
+    int bool_start = 5 + strlen(handle->key); 
     char *ret = (boolean*) &handle->data[bool_start];
     
     if (ret[0] == '1'){
@@ -164,8 +139,7 @@ boolean dspr_getBoolean(DSPair *handle){
 }
 
 
-//"key\0$S20$\0String data is here."
-//"$S20$\0key\0String data is here."
+//"$S20$\0key\0String data is here."  
 DSPair *dspr_newString(char *key, char *str){
     size_t keysize = strlen(key);
     assert(keysize < DS_PAIR_KEY_MAX_LENGTH);
@@ -223,13 +197,10 @@ size_t dspr_getStringSize(DSPair *handle){
     memcpy(size_str, &handle->data[2], i-2); 
     
     
-    int num = atoi(size_str); //limits?
+    int num = atoi(size_str); //set limit
     free(size_str);
     
-    return num;
-    
-    
-     //"$S20$\0key\0String data is here."   
+    return num;      
 }
 
 char *dspr_getString(DSPair *handle){
@@ -241,7 +212,7 @@ char *dspr_getString(DSPair *handle){
     
     int string_start = 1;
     int found_first = 0;
-    for (; string_start<32; string_start++){   
+    for (; string_start<32; string_start++){ //32 number to string
         if (found_first && handle->data[string_start] == '\0'){
             string_start++;
             break;
@@ -249,7 +220,7 @@ char *dspr_getString(DSPair *handle){
         
         if (handle->data[string_start] == '$'){
             found_first = 1;
-            string_start +=2;
+            string_start += 2;
         }
     }
 

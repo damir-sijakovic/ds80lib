@@ -21,6 +21,7 @@ no_error, error
 break_loop_at, running
 malloc_size
 add, remove
+allow - deny
 
 a,b,c,d - helper args
 i,j,k,l - loops
